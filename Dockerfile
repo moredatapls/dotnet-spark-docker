@@ -3,6 +3,10 @@ FROM maven:3.6.3-openjdk-8 AS build-java
 RUN mkdir -p /build/
 RUN git clone https://github.com/dotnet/spark.git /build/dotnet-spark
 
+# Run install once to cache the dependencies
+WORKDIR /build/dotnet-spark/src/scala
+RUN mvn install
+
 # Add the patch files
 COPY patches/*.patch /build/dotnet-spark/patches/
 
@@ -10,9 +14,8 @@ WORKDIR /build/dotnet-spark
 RUN git config --global user.email "you@example.com" \
     && git config --global user.name "Your Name" \
     && git am patches/ip-address.patch \
-    && git am patches/clean-up-stdin.patch
+    && git am patches/sleep-debug-thread.patch
 
-# TODO should cache the mvn dependencies
 WORKDIR /build/dotnet-spark/src/scala
 RUN mvn install
 
