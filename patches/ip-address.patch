@@ -1,0 +1,39 @@
+From 5b9e8e620f73c60ce43bac1a873fdb5d450d4219 Mon Sep 17 00:00:00 2001
+From: Helge Bruegner <helge@bruegner.de>
+Date: Tue, 26 May 2020 10:30:21 +0200
+Subject: [PATCH] listen to any incoming IP address
+
+---
+ src/csharp/Microsoft.Spark/Network/DefaultSocketWrapper.cs      | 2 +-
+ .../main/scala/org/apache/spark/api/dotnet/DotnetBackend.scala  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/csharp/Microsoft.Spark/Network/DefaultSocketWrapper.cs b/src/csharp/Microsoft.Spark/Network/DefaultSocketWrapper.cs
+index 8647a14..cc26c94 100644
+--- a/src/csharp/Microsoft.Spark/Network/DefaultSocketWrapper.cs
++++ b/src/csharp/Microsoft.Spark/Network/DefaultSocketWrapper.cs
+@@ -29,7 +29,7 @@ namespace Microsoft.Spark.Network
+         public DefaultSocketWrapper() :
+             this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+         {
+-            _innerSocket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
++            _innerSocket.Bind(new IPEndPoint(IPAddress.Any, 0));
+         }
+ 
+         /// <summary>
+diff --git a/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/api/dotnet/DotnetBackend.scala b/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/api/dotnet/DotnetBackend.scala
+index 45b3cd5..cf4ec15 100644
+--- a/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/api/dotnet/DotnetBackend.scala
++++ b/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/api/dotnet/DotnetBackend.scala
+@@ -57,7 +57,7 @@ class DotnetBackend extends Logging {
+       }
+     })
+ 
+-    channelFuture = bootstrap.bind(new InetSocketAddress("localhost", portNumber))
++    channelFuture = bootstrap.bind(new InetSocketAddress("0.0.0.0", portNumber))
+     channelFuture.syncUninterruptibly()
+     channelFuture.channel().localAddress().asInstanceOf[InetSocketAddress].getPort
+   }
+-- 
+2.24.3 (Apple Git-128)
+

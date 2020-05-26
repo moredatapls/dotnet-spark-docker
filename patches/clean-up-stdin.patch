@@ -1,0 +1,28 @@
+From f95e6eee0859ba6c96e475b2d37562c826fb913a Mon Sep 17 00:00:00 2001
+From: Helge Bruegner <helge.bruegner@solytic.com>
+Date: Tue, 26 May 2020 11:53:17 +0200
+Subject: [PATCH] added loop to clean up pending input
+
+---
+ .../scala/org/apache/spark/deploy/dotnet/DotnetRunner.scala  | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/deploy/dotnet/DotnetRunner.scala b/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/deploy/dotnet/DotnetRunner.scala
+index 65a56e3..ac0ecc4 100644
+--- a/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/deploy/dotnet/DotnetRunner.scala
++++ b/src/scala/microsoft-spark-2.4.x/src/main/scala/org/apache/spark/deploy/dotnet/DotnetRunner.scala
+@@ -154,6 +154,11 @@ object DotnetRunner extends Logging {
+         println("***********************************************************************")
+         // scalastyle:on println
+ 
++        // we need this to ignore all "pending" input in the docker compose setup
++        do {
++          // ignore input
++        } while ((StdIn.readLine()) != null)
++
+         StdIn.readLine()
+         closeBackend(dotnetBackend)
+         DotnetUtils.exit(0)
+-- 
+2.24.3 (Apple Git-128)
+

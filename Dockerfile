@@ -1,4 +1,26 @@
-FROM bde2020/spark-submit:2.4.5-hadoop2.7
+FROM maven:3.6.3-openjdk-8 AS build-java
+
+RUN mkdir -p /build/
+RUN git clone https://github.com/dotnet/spark.git /build/dotnet-spark
+
+# Add the patch files
+COPY patches/*.patch /build/dotnet-spark/patches/
+
+WORKDIR /build/dotnet-spark
+RUN git config --global user.email "you@example.com" \
+    && git config --global user.name "Your Name" \
+    && git am patches/ip-address.patch \
+    && git am patches/clean-up-stdin.patch
+
+# TODO should cache the mvn dependencies
+WORKDIR /build/dotnet-spark/src/scala
+RUN mvn install
+
+
+# TODO build Microsoft.Spark.Worker as well
+
+
+FROM bde2020/spark-submit:2.4.5-hadoop2.7 AS run
 
 RUN mkdir -p /app/
 
@@ -14,7 +36,11 @@ RUN wget https://www.nuget.org/api/v2/package/Microsoft.Spark/0.11.0 -O /tmp/mic
 
 # Copy stuff
 COPY run-debug.sh /app/
-# COPY Resources/Jars/*.jar /app/Jars/ - use this when you have additional jars, e.g. jdbc drivers 
+# Use this when you have additional jars, e.g. jdbc drivers 
+COPY jars/* /app/jars/
+
+# Copy the patched jar
+COPY --from=build-java /build/dotnet-spark/src/scala/microsoft-spark-2.4.x/target/microsoft-spark-2.4.x-0.11.0.jar /app/Microsoft.Spark-patched/jars/microsoft-spark-2.4.x-0.11.0.jar
 
 # Backend config
 ENV DOTNET_WORKER_DIR /app/Microsoft.Spark.Worker-0.11.0/
@@ -23,7 +49,11 @@ ENV SPARK_MASTER_URL local
 
 # Spark config
 ENV ENABLE_INIT_DAEMON false
-ENV DOTNETBACKEND_JAR /app/Microsoft.Spark/jars/microsoft-spark-2.4.x-0.11.0.jar
 ENV SPARK_APPLICATION_MAIN_CLASS org.apache.spark.deploy.dotnet.DotnetRunner
+
+# use the unpatched one
+#ENV DOTNETBACKEND_JAR /app/Microsoft.Spark/jars/microsoft-spark-2.4.x-0.11.0.jar
+# use the patched one
+ENV DOTNETBACKEND_JAR /app/Microsoft.Spark-patched/jars/microsoft-spark-2.4.x-0.11.0.jar
 
 CMD /app/run-debug.sh
